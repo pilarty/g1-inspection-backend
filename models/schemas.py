@@ -14,8 +14,6 @@ class DeteccionIn(BaseModel):
     x: float
     y: float
     imagen_base64: str
-    prob_deteccion: float
-    tipos_dano: List[TipoDanoIn]
 
 
 class RoomLayoutIn(BaseModel):

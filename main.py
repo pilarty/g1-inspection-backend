@@ -14,7 +14,6 @@ BASE_DIR = Path(__file__).parent
 
 app = FastAPI(title="G1 Structural Inspector - Backend")
 
-# CORS abierto para la demo. En producción, restringir a la URL real del front.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

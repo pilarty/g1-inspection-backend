@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from domain import clasificador_danos_cnn, detector_danos_cnn, preprocesamiento_imagen
 from domain.seguimiento_detecciones import armar_registro
 from infrastructure import repositorio_datos, storage_s3
 from models.schemas import DeteccionIn, RoomLayoutIn
@@ -7,7 +8,12 @@ from models.schemas import DeteccionIn, RoomLayoutIn
 
 def registrar_deteccion(det: DeteccionIn) -> dict:
     ruta_imagen = storage_s3.guardar_imagen(det.imagen_base64)
-    registro = armar_registro(det, ruta_imagen)
+    imagen = preprocesamiento_imagen.decodificar_y_redimensionar(det.imagen_base64)
+
+    dano, prob_dano = detector_danos_cnn.hay_dano(imagen)
+    tipos = clasificador_danos_cnn.clasificar(imagen) if dano else []
+
+    registro = armar_registro(det, ruta_imagen, prob_dano, tipos)
     repositorio_datos.agregar_deteccion(registro)
     return registro
 
