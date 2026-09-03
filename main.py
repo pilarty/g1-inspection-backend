@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from api.routes import hallazgos, relevamientos, sistema
+from api.routes import hallazgos, mision, relevamientos, sistema
 
 BASE_DIR = Path(__file__).parent
 
@@ -24,6 +24,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 app.include_router(hallazgos.router)
+app.include_router(mision.router)
 app.include_router(relevamientos.router)
 app.include_router(sistema.router)
 

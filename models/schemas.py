@@ -24,3 +24,20 @@ class RoomLayoutIn(BaseModel):
     width: float
     depth: float
     floor_polygon: List[List[float]]
+
+
+class MissionIn(BaseModel):
+    waypoints: List[List[float]]
+    arrival_radius: float = 0.4
+    pause_duration: float = 3.0
+
+
+class MissionStatusIn(BaseModel):
+    x: float
+    y: float
+    yaw: float
+    waypoint_idx: int
+    waypoints_total: int
+    distance_to_goal: float
+    waiting_at_waypoint: bool
+    fallen: bool
