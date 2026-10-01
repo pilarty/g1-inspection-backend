@@ -4,3 +4,5 @@ pydantic
 tensorflow
 numpy
 Pillow
+pycognito
+requests

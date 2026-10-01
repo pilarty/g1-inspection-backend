@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from domain import clasificador_danos_cnn, detector_danos_cnn, preprocesamiento_imagen
 from domain.seguimiento_detecciones import armar_registro
-from infrastructure import repositorio_datos, storage_s3
+from infrastructure import nube, repositorio_datos, storage_s3
 from models.schemas import DeteccionIn, RoomLayoutIn
 
 
@@ -15,6 +15,8 @@ def registrar_deteccion(det: DeteccionIn) -> dict:
 
     registro = armar_registro(det, ruta_imagen, prob_dano, tipos)
     repositorio_datos.agregar_deteccion(registro)
+    if nube.relevamiento_actual is not None:
+        nube.enviar_en_segundo_plano(registro, nube.relevamiento_actual)
     return registro
 
 
