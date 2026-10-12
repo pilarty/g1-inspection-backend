@@ -3,7 +3,7 @@ import threading
 import requests
 from pycognito import Cognito
 
-from config import BASE_DIR
+from config import DATA_DIR
 
 POOL = "us-east-1_s9afR6W9w"
 CLIENT = "4044ectglilgk2u23qeit75pue"
@@ -11,14 +11,61 @@ API = "https://lunkxzh9q5.execute-api.us-east-1.amazonaws.com"
 
 _usuario = None
 relevamiento_actual = None
+nombre_usuario = None
+email_usuario = None
+_usuario_id = None
 
 
 def iniciar_sesion(usuario: str, clave: str) -> None:
     """Login con Cognito (SRP). La clave no se guarda en ningun lado."""
-    global _usuario
+    global _usuario, nombre_usuario, email_usuario, _usuario_id
     u = Cognito(POOL, CLIENT, username=usuario)
     u.authenticate(password=clave)
     _usuario = u
+    claims = getattr(u, "id_claims", None) or {}
+    nombre_usuario = claims.get("name") or claims.get("email") or usuario
+    email_usuario = claims.get("email")
+    _usuario_id = None
+
+
+def cerrar_sesion() -> None:
+    global _usuario, nombre_usuario, relevamiento_actual, email_usuario, _usuario_id
+    email_usuario = None
+    _usuario_id = None
+    _usuario = None
+    nombre_usuario = None
+    relevamiento_actual = None
+
+
+def reenviar(metodo, ruta, params=None, cuerpo=None):
+    """Reenvia una peticion a la API de AWS con el token de Cognito."""
+    return requests.request(
+        metodo, API + "/" + ruta.lstrip("/"), headers=_headers(),
+        params=params, json=cuerpo, timeout=20,
+    )
+
+
+def usuario_id() -> int:
+    """ID de la tabla usuario para quien tiene la sesion (lo crea si no existe)."""
+    global _usuario_id
+    if _usuario_id is not None:
+        return _usuario_id
+    if not email_usuario:
+        raise RuntimeError("la cuenta no tiene correo")
+    r = reenviar("GET", "usuarios")
+    r.raise_for_status()
+    for u in r.json():
+        if u.get("email") == email_usuario:
+            _usuario_id = u["id"]
+            return _usuario_id
+    r = reenviar("POST", "usuarios", cuerpo={
+        "nombre": nombre_usuario or email_usuario,
+        "email": email_usuario,
+        "rol": "inspector",
+    })
+    r.raise_for_status()
+    _usuario_id = r.json()["id"]
+    return _usuario_id
 
 
 def sesion_activa() -> bool:
@@ -33,7 +80,7 @@ def _headers() -> dict:
 def subir_hallazgo(registro: dict, relevamiento_id: int) -> None:
     """Sube la foto a S3 y crea el hallazgo en la base de datos."""
     h = _headers()
-    ruta = BASE_DIR / registro["image"].lstrip("/")
+    ruta = DATA_DIR / registro["image"].lstrip("/")
 
     s = requests.post(
         API + "/archivos/subida", headers=h, timeout=15,

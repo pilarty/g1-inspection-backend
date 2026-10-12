@@ -2,13 +2,16 @@ import sys
 
 sys.dont_write_bytecode = True  # no generar __pycache__/ en ninguna carpeta del proyecto
 
+import os
 from pathlib import Path
+
+from config import DATA_DIR
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from api.routes import hallazgos, mision, nube, relevamientos, sistema
+from api.routes import hallazgos, mision, nube, relevamientos, robot, sistema
 
 BASE_DIR = Path(__file__).parent
 
@@ -21,14 +24,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+app.mount("/static", StaticFiles(directory=str(DATA_DIR / "static")), name="static")
 
 app.include_router(hallazgos.router)
 app.include_router(mision.router)
 app.include_router(relevamientos.router)
 app.include_router(sistema.router)
 app.include_router(nube.router)
+app.include_router(robot.router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=os.environ.get("G1_HOST", "0.0.0.0"), port=int(os.environ.get("G1_PORT", "8000")))
