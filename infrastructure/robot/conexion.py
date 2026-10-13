@@ -8,7 +8,6 @@ comprueba con un unico comando de solo lectura (lsusb) por SSH.
 """
 import ipaddress
 import json
-import platform
 import re
 import socket
 import subprocess
@@ -16,7 +15,6 @@ import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from importlib import metadata
 from pathlib import Path
 from typing import Iterator, Optional
 
@@ -214,10 +212,9 @@ def paso_camara(cfg: Conexion, ip_local: Optional[str]) -> str:
     )
 
 
-def _sonda(canal: str, dominio: int, ip_local: Optional[str]) -> dict:
-    limite = LIMITE_S["dds"]
-    cmd = [sys.executable, "-B", "-m", "infrastructure.robot.sonda_dds", "--canal", canal,
-           "--dominio", str(dominio), "--timeout", str(limite)]
+def _proceso_dds(modulo: str, args: list, ip_local: Optional[str], limite: float, que: str) -> dict:
+    """Corre un modulo DDS en un proceso aparte y devuelve la linea JSON que imprime."""
+    cmd = [sys.executable, "-B", "-m", modulo, *args]
     if ip_local:
         cmd += ["--interfaz", ip_local]
     try:
@@ -226,14 +223,21 @@ def _sonda(canal: str, dominio: int, ip_local: Optional[str]) -> dict:
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except subprocess.TimeoutExpired:
-        return {"ok": False, "detalle": "La escucha DDS no terminó a tiempo."}
+        return {"ok": False, "detalle": f"{que} no terminó a tiempo."}
     for linea in reversed(p.stdout.strip().splitlines()):
         try:
             return json.loads(linea)
         except ValueError:
             continue
     error = (p.stderr.strip().splitlines() or ["sin salida"])[-1]
-    return {"ok": False, "detalle": f"La escucha DDS terminó con error: {error}"}
+    return {"ok": False, "detalle": f"{que} terminó con error: {error}"}
+
+
+def _sonda(canal: str, dominio: int, ip_local: Optional[str]) -> dict:
+    limite = LIMITE_S["dds"]
+    return _proceso_dds("infrastructure.robot.sonda_dds",
+                        ["--canal", canal, "--dominio", str(dominio), "--timeout", str(limite)],
+                        ip_local, limite, "La escucha DDS")
 
 
 def paso_dds(cfg: Conexion, interfaz: Optional[dict], ip_local: Optional[str]) -> str:
@@ -304,35 +308,11 @@ def probar(cfg: Conexion, pasos: Optional[list] = None) -> Iterator[dict]:
     yield {"tipo": "fin", "fecha": _ahora(), "resultado": "error" if fallos else "ok", "fallos": fallos}
 
 
-def estado_robot(cfg: Conexion) -> dict:
-    """Recibiendo / Sin datos según llegue rt/lowstate; Desconocido si no hay conexión."""
+def parar_emergencia(cfg: Conexion) -> dict:
+    """Pone el robot en modo amortiguado (como L2 + B en el mando). No pide confirmacion."""
     interfaz = resolver_interfaz(cfg)
     ip_local = ip_de(interfaz, cfg.host)
-    try:
-        paso_red(cfg, interfaz, ip_local)
-    except FalloPaso as e:
-        return {"estado": "desconocido", "mensaje": f"Sin conexión con el robot. {e}"}
-    r = _sonda("estado", cfg.dds_domain_id, ip_local)
-    if r["ok"]:
-        return {"estado": "recibiendo", "mensaje": r["detalle"]}
-    return {
-        "estado": "sin_datos",
-        "mensaje": f"El robot responde, pero no envía su estado por DDS en el Domain ID {cfg.dds_domain_id}.",
-    }
-
-
-def versiones() -> dict:
-    def v(paquete):
-        try:
-            return metadata.version(paquete)
-        except metadata.PackageNotFoundError:
-            return None
-    return {
-        "sistema": platform.platform(),
-        "python": platform.python_version(),
-        "cyclonedds": v("cyclonedds"),
-        "paramiko": v("paramiko"),
-        "psutil": v("psutil"),
-        "requests": v("requests"),
-        "fastapi": v("fastapi"),
-    }
+    r = _proceso_dds("infrastructure.robot.parada_dds", ["--dominio", str(cfg.dds_domain_id), "--timeout", "2"],
+                     ip_local, 2, "La orden de parada")
+    r.setdefault("confirmada", False)
+    return r

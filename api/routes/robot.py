@@ -60,17 +60,6 @@ def probar(d: ConexionIn):
     return StreamingResponse(_ndjson(conexion.probar(cfg)), media_type="application/x-ndjson")
 
 
-@router.post("/estado")
-def estado(d: ConexionIn):
-    """Si el robot esta enviando su estado por DDS (solo escucha)."""
-    return conexion.estado_robot(_a_conexion(_completar_credenciales(d)))
-
-
-@router.get("/version")
-def version():
-    return conexion.versiones()
-
-
 # ─── Reconexion con un perfil guardado en la nube ─────────────────────────────
 
 def _leer_nube(ruta: str) -> dict:
@@ -167,6 +156,16 @@ def autorizar_movimiento(d: AutorizarIn):
         raise HTTPException(422, "faltan confirmaciones de seguridad")
     movimiento_autorizado = True
     return {"ok": True}
+
+
+@router.post("/parada")
+def parada_emergencia():
+    """Parada de emergencia: amortigua el robot conectado y retira el permiso de movimiento."""
+    global movimiento_autorizado
+    movimiento_autorizado = False  # aunque falle el envio: hay que volver a confirmar para moverlo
+    if robot_activo is None:
+        raise HTTPException(409, "no hay un robot conectado")
+    return conexion.parar_emergencia(robot_activo["conexion"])
 
 
 @router.post("/desconectar")
