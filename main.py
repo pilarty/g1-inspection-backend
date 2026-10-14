@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from api.routes import hallazgos, mision, nube, relevamientos, robot, sistema
+from api.routes import edificios, hallazgos, mision, nube, relevamientos, robot, sistema
 
 BASE_DIR = Path(__file__).parent
 
@@ -32,6 +32,7 @@ app.include_router(relevamientos.router)
 app.include_router(sistema.router)
 app.include_router(nube.router)
 app.include_router(robot.router)
+app.include_router(edificios.router)
 
 if __name__ == "__main__":
     import uvicorn
