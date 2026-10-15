@@ -5,14 +5,14 @@ import requests
 from fastapi import APIRouter, Body, HTTPException, Request, Response
 from pydantic import BaseModel
 
-from infrastructure import nube
+from infrastructure import nube, repositorio_datos, trayectoria
 
 router = APIRouter(prefix="/nube")
 
 # Solo se reenvian estos recursos de la API de AWS
 RECURSOS = {
     "proyectos", "edificaciones", "robots", "usuarios", "documentos",
-    "relevamientos", "hallazgos", "informes", "archivos", "resumen", "yo",
+    "relevamientos", "hallazgos", "informes", "archivos", "resumen", "yo", "plantas",
 }
 
 
@@ -29,6 +29,7 @@ class IniciarIn(BaseModel):
     edificacion_id: int
     robot_id: int
     fecha_programada: Optional[str] = None
+    planta: Optional[str] = None  # piso que se inspecciona (ej. "PB", "Piso 1", "Subsuelo 1")
 
 
 def _ahora() -> str:
@@ -91,12 +92,20 @@ def iniciar_relevamiento(d: IniciarIn):
         raise HTTPException(502, "no se pudo crear el relevamiento en la nube")
     relevamiento = r.json()
     nube.relevamiento_actual = relevamiento["id"]
+    if d.planta:
+        try:
+            nube.reenviar("PUT", f"relevamientos/{relevamiento['id']}/planta", cuerpo={"planta": d.planta}).raise_for_status()
+        except requests.RequestException:
+            print("[nube] no se pudo guardar la planta de la inspección")
+    # Si el simulador ya mandó el plano antes de empezar, se guarda con esta inspección
+    trayectoria.subir_plano(relevamiento["id"], repositorio_datos.obtener_room_layout())
     return relevamiento
 
 
 @router.post("/relevamientos/detener")
 def detener_relevamiento():
     """Deja de enviar detecciones y marca el relevamiento como finalizado."""
+    trayectoria.enviar_pendientes()  # que no se pierdan los últimos puntos del camino
     rid = nube.relevamiento_actual
     nube.relevamiento_actual = None
     if rid is not None and nube.sesion_activa():

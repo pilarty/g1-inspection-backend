@@ -98,7 +98,6 @@ def subir_hallazgo(registro: dict, relevamiento_id: int) -> None:
     r = requests.post(API + "/hallazgos", headers=h, timeout=15, json={
         "relevamiento_id": relevamiento_id,
         "tipo_dano": tipos[0]["type"] if tipos else "Sin clasificar",
-        "severidad": registro["severity"],
         "ubicacion_x": registro["x"],
         "ubicacion_y": registro["y"],
         "imagen_representativa_url": s["key"],

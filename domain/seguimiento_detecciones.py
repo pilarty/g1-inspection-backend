@@ -1,7 +1,6 @@
 import uuid
 from typing import List, Tuple
 
-from domain.evaluador_severidad import calcular_severidad
 from models.schemas import DeteccionIn, TipoDanoIn
 
 TRADUCCIONES = {
@@ -31,7 +30,6 @@ def armar_registro(
         "x": det.x,
         "y": det.y,
         "detection_probability": round(prob_dano * 100),
-        "severity": calcular_severidad(tipos_dano),
         "types": [
             {
                 "type": t.clase,               # clase original (inglés), para trazabilidad

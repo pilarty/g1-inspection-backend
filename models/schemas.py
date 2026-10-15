@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -16,6 +16,13 @@ class DeteccionIn(BaseModel):
     imagen_base64: str
 
 
+class PoseIn(BaseModel):
+    x: float
+    y: float
+    yaw: Optional[float] = None  # radianes, hacia dónde mira el robot
+    timestamp: Optional[float] = None  # time.time() del que manda; si falta, se usa la hora de llegada
+
+
 class RoomLayoutIn(BaseModel):
     x_min: float
     x_max: float
@@ -24,6 +31,7 @@ class RoomLayoutIn(BaseModel):
     width: float
     depth: float
     floor_polygon: List[List[float]]
+    paredes: Optional[dict] = None  # {resolucion, celdas: [[i, j], ...]} (plano de paredes del escenario)
 
 
 class MissionIn(BaseModel):
