@@ -86,7 +86,7 @@ def _subir_foto(data_url: Optional[str], nombre: str) -> Optional[str]:
         return None
 
 
-def _inspeccion(rel: dict, robots: List[dict], plantas: Dict[int, str]) -> dict:
+def _inspeccion(rel: dict, robots: List[dict], plantas: Dict[int, dict]) -> dict:
     """Todo lo de una inspección, listo para el archivo."""
     rid = rel["id"]
     robot = next((r for r in robots if r.get("id") == rel.get("robot_id")), None)
@@ -96,7 +96,9 @@ def _inspeccion(rel: dict, robots: List[dict], plantas: Dict[int, str]) -> dict:
         "fecha_inicio": rel.get("fecha_inicio"),
         "fecha_fin": rel.get("fecha_fin"),
         "estado": "finalizado" if rel.get("estado") == "en_curso" else rel.get("estado"),
-        "planta": plantas.get(rid),
+        "planta": (plantas.get(rid) or {}).get("planta"),
+        "motivo": (plantas.get(rid) or {}).get("motivo"),
+        "observaciones": (plantas.get(rid) or {}).get("observaciones"),
         "robot": {"codigo": (robot or {}).get("codigo") or "Robot", "unidad": (robot or {}).get("unidad") or "Unitree G1"},
         "trayectoria": _get(f"relevamientos/{rid}/trayectoria", opcional=True) or [],
         "plano": _get(f"relevamientos/{rid}/plano", opcional=True),
@@ -125,7 +127,7 @@ def exportar_edificacion(eid: int):
         edif = _get(f"edificaciones/{eid}")
         proyecto = _get(f"proyectos/{edif['proyecto_id']}", opcional=True)
         robots = _get("robots") or []
-        plantas = {x["relevamiento_id"]: x["planta"] for x in (_get("plantas", opcional=True) or [])}
+        plantas = {x["relevamiento_id"]: x for x in (_get("plantas", opcional=True) or [])}
         rels = sorted((r for r in (_get("relevamientos") or []) if r.get("edificacion_id") == eid),
                       key=lambda r: r.get("fecha_inicio") or "")
         inspecciones = [_inspeccion(r, robots, plantas) for r in rels]
@@ -176,7 +178,8 @@ def _importar_inspeccion(eid: int, insp: dict, num: int, avisos: List[str], robo
             avisos.append(f"Inspección {num}: no se pudo importar {desc}.")
 
     if insp.get("planta"):
-        extra("la planta", "PUT", f"relevamientos/{rid}/planta", {"planta": insp["planta"]})
+        extra("la planta", "PUT", f"relevamientos/{rid}/planta",
+              {"planta": insp["planta"], "motivo": insp.get("motivo"), "observaciones": insp.get("observaciones")})
     if insp.get("plano"):
         extra("el plano", "PUT", f"relevamientos/{rid}/plano", insp["plano"])
     puntos = insp.get("trayectoria") or []
