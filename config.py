@@ -11,6 +11,9 @@ PESOS_DIR = BASE_DIR / "modelos_entrenados"
 DATA_DIR = Path(os.environ.get("G1_DATA_DIR") or BASE_DIR)
 IMAGES_DIR = DATA_DIR / "static" / "images"
 
-MODELO_DETECCION_PATH = PESOS_DIR / "modelo_detection.keras"
-MODELO_CLASIFICACION_PATH = PESOS_DIR / "modelo_classification.keras"
-THRESHOLDS_PATH = PESOS_DIR / "thresholds.json"
+# Modelos v2 (repo humanoid-damage-cnn, carpeta models):
+# - detección: CNN binaria, salida sigmoid = probabilidad de «sin daño»
+# - clasificación: EfficientNetB0 con softmax sobre 11 clases (sin umbrales por clase)
+MODELO_DETECCION_PATH = PESOS_DIR / "modelo_detection2.keras"
+MODELO_CLASIFICACION_PATH = PESOS_DIR / "modelo_clasificacion2.keras"
+CLASES_CLASIFICACION_PATH = PESOS_DIR / "modelo_clasificacion2_clases.json"

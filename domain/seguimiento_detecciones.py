@@ -4,9 +4,20 @@ from typing import List, Tuple
 from models.schemas import DeteccionIn, TipoDanoIn
 
 TRADUCCIONES = {
-    "Diagonal crack": "Grieta diagonal",
-    "Concrete spalling": "Desprendimiento de hormigón",
+    # Clases del modelo de clasificación v2
+    "Structural crack": "Grieta estructural",
+    "Surface flaking/exfoliation": "Descascaramiento",
+    "Salt weathering": "Eflorescencia salina",
+    "Material loss/erosion": "Pérdida de material",
+    "Moisture/water damage": "Humedad",
+    "Biological growth": "Crecimiento biológico",
     "Corrosion": "Corrosión",
+    "Concrete spalling": "Desprendimiento de hormigón",
+    "Vegetation": "Vegetación",
+    "Delamination": "Delaminación",
+    "Vandalism": "Vandalismo",
+    # Clases del modelo anterior (inspecciones viejas)
+    "Diagonal crack": "Grieta diagonal",
     "Shear crack": "Grieta de corte",
     "Flexural/rocking crack": "Grieta de flexión",
     "Debris": "Escombros",
