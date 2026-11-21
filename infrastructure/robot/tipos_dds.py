@@ -12,7 +12,7 @@ import cyclonedds.idl.annotations as annotate
 import cyclonedds.idl.types as types
 
 
-# ─── Unitree G1 (unitree_hg) ──────────────────────────────────────────────────
+# Unitree G1 (unitree_hg)
 
 @dataclass
 @annotate.final
@@ -56,7 +56,7 @@ class LowState_(idl.IdlStruct, typename="unitree_hg.msg.dds_.LowState_"):
     crc: types.uint32
 
 
-# ─── Peticiones a servicios del robot (unitree_api) ──────────────────────────
+# Peticiones a servicios del robot (unitree_api)
 
 @dataclass
 @annotate.final

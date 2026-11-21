@@ -49,7 +49,7 @@ class Conexion:
     interfaz: Optional[str] = None  # nombre elegido; None = detectar
 
 
-# ─── Interfaces de red ────────────────────────────────────────────────────────
+# Interfaces de red
 
 def listar_interfaces() -> list:
     stats = psutil.net_if_stats()
@@ -108,7 +108,7 @@ def ip_de(interfaz: Optional[dict], host: str) -> Optional[str]:
     return interfaz["ips"][0]
 
 
-# ─── Pasos ────────────────────────────────────────────────────────────────────
+# Pasos
 
 class FalloPaso(Exception):
     """El paso fallo; el mensaje explica la causa probable en lenguaje claro."""
@@ -253,7 +253,7 @@ def paso_dds(cfg: Conexion, interfaz: Optional[dict], ip_local: Optional[str]) -
     return r["detalle"]
 
 
-# ─── Prueba completa ──────────────────────────────────────────────────────────
+# Prueba completa
 
 def _ahora() -> str:
     return datetime.now(timezone.utc).isoformat()

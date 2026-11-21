@@ -1,8 +1,9 @@
 import json
 from typing import List, Tuple
 
+import threading
+
 import numpy as np
-import tensorflow as tf
 from PIL import Image
 
 from config import CALIBRACION_CLASIFICACION_PATH, CLASES_CLASIFICACION_PATH, MODELO_CLASIFICACION_PATH
@@ -19,15 +20,25 @@ if CALIBRACION_CLASIFICACION_PATH.exists():
 # Cuántos tipos se guardan por foto (el primero es la predicción)
 CANTIDAD = 3
 
-_modelo = tf.keras.models.load_model(str(MODELO_CLASIFICACION_PATH))
+_modelo = None
+_cerrojo = threading.Lock()
+
+
+def cargar():
+    global _modelo
+    with _cerrojo:
+        if _modelo is None:
+            import tensorflow as tf
+            _modelo = tf.keras.models.load_model(str(MODELO_CLASIFICACION_PATH))
+    return _modelo
 
 
 def clasificar(imagen: Image.Image) -> List[Tuple[str, float]]:
     """Devuelve las CANTIDAD clases más probables (clase, probabilidad), de mayor a menor.
     Es softmax: las probabilidades de todas las clases suman 1 y la primera es la predicción.
     La imagen va en 224x224 y 0-255: el preprocesamiento de EfficientNet está dentro del modelo."""
-    img_array = np.expand_dims(tf.keras.utils.img_to_array(imagen), axis=0)
-    probs = _modelo.predict(img_array, verbose=0)[0]
+    img_array = np.expand_dims(np.asarray(imagen, dtype="float32"), axis=0)
+    probs = cargar().predict(img_array, verbose=0)[0]
     logits = np.log(np.clip(probs, 1e-9, 1)) / TEMPERATURA
     probs = np.exp(logits - logits.max())
     probs = probs / probs.sum()

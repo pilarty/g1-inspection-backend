@@ -60,7 +60,7 @@ def probar(d: ConexionIn):
     return StreamingResponse(_ndjson(conexion.probar(cfg)), media_type="application/x-ndjson")
 
 
-# ─── Reconexion con un perfil guardado en la nube ─────────────────────────────
+# Reconexion con un perfil guardado en la nube
 
 def _leer_nube(ruta: str) -> dict:
     if not nube.sesion_activa():

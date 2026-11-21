@@ -12,7 +12,7 @@ router = APIRouter(prefix="/nube")
 # Solo se reenvian estos recursos de la API de AWS
 RECURSOS = {
     "proyectos", "edificaciones", "robots", "usuarios", "documentos",
-    "relevamientos", "hallazgos", "informes", "archivos", "resumen", "yo", "plantas",
+    "relevamientos", "hallazgos", "informes", "archivos", "resumen", "yo", "plantas", "alquileres", "licencia",
 }
 
 
@@ -60,7 +60,7 @@ def logout():
     return {"ok": True}
 
 
-# ── Perfil de la cuenta ──
+# Perfil de la cuenta
 
 class DatosIn(BaseModel):
     nombre: str
@@ -213,7 +213,7 @@ def restablecer_clave(d: RestablecerIn):
     return {"ok": True}
 
 
-# ── Registro de cuentas nuevas (sin estar adentro) ──
+# Registro de cuentas nuevas (sin estar adentro)
 
 class RegistroIn(BaseModel):
     nombre: str
