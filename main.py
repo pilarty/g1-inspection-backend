@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from api.routes import archivo_inspeccion, edificios, hallazgos, mision, nube, relevamientos, robot, sistema
+from api.routes import archivo_inspeccion, edificios, hallazgos, mision, navegacion, nube, relevamientos, robot, sistema
 
 BASE_DIR = Path(__file__).parent
 
@@ -35,6 +35,7 @@ app.include_router(nube.router)
 app.include_router(robot.router)
 app.include_router(edificios.router)
 app.include_router(archivo_inspeccion.router)
+app.include_router(navegacion.router)
 
 
 @app.on_event("startup")
