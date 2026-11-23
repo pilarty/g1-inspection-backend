@@ -11,14 +11,17 @@ PESOS_DIR = BASE_DIR / "modelos_entrenados"
 DATA_DIR = Path(os.environ.get("G1_DATA_DIR") or BASE_DIR)
 IMAGES_DIR = DATA_DIR / "static" / "images"
 
-# Modelos (repo humanoid-damage-cnn, carpeta models). Se usa la v3 si sus archivos
-# estan en modelos_entrenados; si no, la v2.
+# Modelos (repo humanoid-damage-cnn, carpeta models). Se usa la version mas
+# nueva que este en modelos_entrenados (detección v4, clasificación v3); si no, la v2.
 # - detección: CNN binaria, salida sigmoid = probabilidad de «sin daño»
 # - clasificación: EfficientNetB0 con softmax sobre 11 clases
-# Los *_calibracion.json (solo v3) traen la temperatura y el umbral; sin ellos
+# Los *_calibracion.json (v3 en adelante) traen la temperatura y el umbral; sin ellos
 # se usa temperatura 1 y umbral 0.5, es decir, las probabilidades tal cual.
 def _version(nombre: str) -> str:
-    return "3" if (PESOS_DIR / f"{nombre}3.keras").exists() else "2"
+    for v in ("4", "3"):
+        if (PESOS_DIR / f"{nombre}{v}.keras").exists():
+            return v
+    return "2"
 
 _V_DET = _version("modelo_detection")
 _V_CLA = _version("modelo_clasificacion")
